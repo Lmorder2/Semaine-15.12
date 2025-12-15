@@ -1,9 +1,21 @@
+#include <Arduino_LED_Matrix.h>
+
+ArduinoLEDMatrix matrix;
+
+uint8_t motif[8][13] = {
+  {1,0,1,1,1,1,1,0,0,1,0,0,1},
+  {1,0,1,1,0,0,1,0,0,1,0,0,1},
+  {1,1,1,1,1,0,1,0,0,1,0,0,1},
+  {1,0,1,1,0,0,1,1,1,1,1,1,1},
+  {1,0,1,1,1,1,1,1,0,1,0,0,1},
+  {1,0,1,1,0,1,1,0,1,1,0,0,1},
+  {0,0,0,0,0,1,1,1,0,1,0,0,1},
+  {0,0,0,0,0,0,0,0,0,0,0,0,0}
+};
+
 void setup() {
-  // put your setup code here, to run once:
-
+  matrix.begin();
+  matrix.renderBitmap(motif, 8, 13);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-
-}
+void loop() {}
