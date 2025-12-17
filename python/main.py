@@ -2,71 +2,101 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import serial
+import serial.tools.list_ports
 import time
 import sys
+import os
 
 # Configuration
-# Replace 'COM3' with your Arduino's serial port (e.g., 'COM3' on Windows, '/dev/ttyACM0' on Linux/Mac)
-SERIAL_PORT = 'COM3'  
+# NO HARDCODED PORT - We will search for it
 BAUD_RATE = 9600
-MODEL_PATH = "model.keras" # Assumes model is in the same directory, user needs to update path if different
-# If you have model.json and bin files, load them differently, but Keras typically uses .h5 or .keras
+CONFIDENCE_THRESHOLD = 0.5  # Lowered for easier testing
+
+def find_arduino_port():
+    """Attempts to find the Arduino serial port automatically."""
+    ports = list(serial.tools.list_ports.comports())
+    print(f"Available ports: {[p.device for p in ports]}")
+    
+    # Priority list for Linux/Internal ports
+    # On many embedded Linux arduino boards, the internal link might be ttyRPMSG0, ttyGS0, or ttyACM0
+    priority_patterns = ['/dev/ttyACM', '/dev/ttyUSB', '/dev/ttyS', 'COM']
+    
+    for pattern in priority_patterns:
+        for p in ports:
+            if pattern in p.device:
+                return p.device
+    
+    # Fallback: just return the first one if any
+    if ports:
+        return ports[0].device
+    return None
 
 def main():
+    print("Python Script Starting...", flush=True)
+
     # 1. Setup Serial Communication
-    try:
-        arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-        time.sleep(2) # Wait for connection to stabilize
-        print(f"Connected to Arduino on {SERIAL_PORT}")
-    except Exception as e:
-        print(f"Error connecting to Serial: {e}")
-        print("Continuing without Arduino (simulation mode)...")
-        arduino = None
+    port = find_arduino_port()
+    arduino = None
+    
+    if port:
+        try:
+            print(f"Attempting to connect to {port}...", flush=True)
+            arduino = serial.Serial(port, BAUD_RATE, timeout=1)
+            time.sleep(2) # Wait for DTR reset
+            print(f"Connected to Arduino on {port}", flush=True)
+        except Exception as e:
+            print(f"Error connecting to Serial {port}: {e}", flush=True)
+    else:
+        print("No Serial Port found. Running in simulation mode.", flush=True)
 
     # 2. Load Model
-    # Note: Adjust model loading based on your specific file format (Teachable Machine usually exports Keras .h5)
+    model_path = 'keras_model.h5'
+    labels_path = 'labels.txt'
+    
+    if not os.path.exists(model_path):
+        print(f"ERROR: Model file {model_path} not found in {os.getcwd()}", flush=True)
+        # Attempt to look in common temp locations if needed, or just warn
+    
     try:
-        # If it's a model.json + weights, use model_from_json
-        # from tensorflow.keras.models import model_from_json
-        # with open('model.json', 'r') as json_file:
-        #     loaded_model_json = json_file.read()
-        # model = model_from_json(loaded_model_json)
-        # model.load_weights("model_weights.h5")
-        
-        # Build a robust loader assuming standard Teachable Machine export
-        model = tf.keras.models.load_model('keras_model.h5', compile=False)
-        print("Model loaded successfully")
+        model = tf.keras.models.load_model(model_path, compile=False)
+        print("Model loaded successfully", flush=True)
     except Exception as e:
-        print(f"Error loading model: {e}")
-        print("Please ensure 'keras_model.h5' and 'labels.txt' are in this folder.")
+        print(f"Error loading model: {e}", flush=True)
         return
 
     # Load Labels
-    try:
-        with open("labels.txt", "r") as f:
+    class_names = ["Class 0", "Class 1"]
+    if os.path.exists(labels_path):
+        with open(labels_path, "r") as f:
             class_names = f.readlines()
-    except FileNotFoundError:
-        class_names = ["Class 0", "Class 1"]
+    else:
+        print("Warning: labels.txt not found. Using default names.", flush=True)
 
     # 3. Open Webcam
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
+    # Try indices 0, 1, 2 in case 0 is not the USB cam
+    cap = None
+    for i in range(3):
+        temp_cap = cv2.VideoCapture(i)
+        if temp_cap.isOpened():
+            cap = temp_cap
+            print(f"Camera opened on index {i}", flush=True)
+            break
+    
+    if not cap:
+        print("Error: Could not open any webcam.", flush=True)
         return
 
-    print("Starting Main Loop. Press 'q' to quit.")
+    print("Starting Main Loop.", flush=True)
 
     while True:
         ret, frame = cap.read()
         if not ret:
+            print("Failed to read frame", flush=True)
             break
 
-        # 4. Preprocess Frame for Model
-        # Teachable Machine models are typically 224x224
+        # 4. Preprocess Frame
         image = cv2.resize(frame, (224, 224), interpolation=cv2.INTER_AREA)
-        # Make the image a numpy array and reshape it to the models input shape.
         image = np.asarray(image, dtype=np.float32).reshape(1, 224, 224, 3)
-        # Normalize the image array
         image = (image / 127.5) - 1
 
         # 5. Inference
@@ -75,35 +105,43 @@ def main():
         class_name = class_names[index].strip()
         confidence_score = prediction[0][index]
 
-        # 6. Logic: Determine if Arm is Up or Down
-        # You need to check which class index corresponds to "Arm Up"
-        # Let's assume Class 0 is "Down/Neutral" and Class 1 is "Up" (Change this based on your training!)
+        # 6. Logic
+        # Debug print every 10 frames or so to avoid spam, or just print status changes
+        # For now, print status
         
-        # Heuristic: If confidence is high enough
-        if confidence_score > 0.7:
-             # Assuming '1' means Arm Level/Up in your labels, checking string content is safer
-            if "Up" in class_name or "Levé" in class_name or index == 0: # ADJUST THIS INDEX
-                # Send '1' for Tick
-                if arduino:
-                    arduino.write(b'1')
-                display_text = "Arm UP (Tick)"
+        # Check for 'Up' or 'Levé' or index 1 (Assuming 0 is down/neutral)
+        is_up = False
+        if "Up" in class_name or "Levé" in class_name:
+            is_up = True
+        elif index == 1: # Fallback assumption if names don't match
+             is_up = True
+
+        if confidence_score > CONFIDENCE_THRESHOLD:
+            if is_up:
+                cmd = b'1'
+                status = "UP (Tick)"
             else:
-                # Send '0' for Cross
-                if arduino:
-                    arduino.write(b'0')
-                display_text = "Arm DOWN (Cross)"
+                cmd = b'0'
+                status = "DOWN (Cross)"
+            
+            if arduino:
+                try:
+                    arduino.write(cmd)
+                except Exception as e:
+                    print(f"Serial Write Error: {e}", flush=True)
         else:
-             display_text = "Unsure"
+            status = "Unsure"
 
-        # Show Output on Screen
-        cv2.putText(frame, f"{display_text} ({int(confidence_score*100)}%)", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.imshow("Webcam Image", frame)
+        print(f"Pred: {class_name} ({confidence_score:.2f}) -> {status}", flush=True)
 
-        # Listen to the keyboard for presses.
-        keyboard_input = cv2.waitKey(1)
-        # 27 is the ASCII for the esc key on your keyboard.
-        if keyboard_input == 27 or keyboard_input == ord('q'):
-            break
+        # Optional: Show Output (might fail in headless container)
+        try:
+            cv2.putText(frame, f"{status} ({int(confidence_score*100)}%)", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.imshow("Webcam Image", frame)
+            if cv2.waitKey(1) == 27:
+                break
+        except Exception:
+            pass # Ignore display errors
 
     cap.release()
     cv2.destroyAllWindows()
