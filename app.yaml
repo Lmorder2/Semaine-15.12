@@ -16,5 +16,9 @@ ports: []
 
 # A list of bricks used by this application.
 bricks:
-  - arduino:video_object_detection: {}
+  - arduino:video_object_detection: {
+    variables: {
+      EI_OBJ_DETECTION_MODEL: /home/arduino/.arduino-bricks/ei-models/arduino_test1.eim
+    }
+  }
   - arduino:web_ui: {}
