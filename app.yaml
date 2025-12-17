@@ -2,7 +2,7 @@
 # This file describes the application's metadata and properties.
 
 # The user-visible name of the application.
-name: Ok
+name: Ok1
 
 # A brief description of what the application does.
 description: ""
@@ -15,4 +15,6 @@ icon: 😀
 ports: []
 
 # A list of bricks used by this application.
-bricks: []
+bricks:
+  - arduino:video_object_detection: {}
+  - arduino:web_ui: {}
