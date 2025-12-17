@@ -4,7 +4,9 @@ ArduinoLEDMatrix matrix;
 
 // Bitmaps for Tick (V) and Cross (X)
 // 8 rows, 13 columns (Uno R4 WiFi Matrix size)
-const uint8_t tick_frame[8][13] = {
+// Bitmaps for Tick (V) and Cross (X)
+// 8 rows, 13 columns (Uno R4 WiFi Matrix size)
+uint8_t tick_frame[8][13] = {
   {0,0,0,0,0,0,0,0,0,0,1,0,0},
   {0,0,0,0,0,0,0,0,0,1,0,0,0},
   {0,0,0,0,0,0,0,0,0,1,0,0,0},
@@ -15,7 +17,7 @@ const uint8_t tick_frame[8][13] = {
   {0,0,1,0,0,0,0,0,0,0,0,0,0}
 };
 
-const uint8_t cross_frame[8][13] = {
+uint8_t cross_frame[8][13] = {
   {1,0,0,0,0,0,0,0,0,0,0,0,1},
   {0,1,0,0,0,0,0,0,0,0,0,1,0},
   {0,0,1,0,0,0,0,0,0,0,1,0,0},
