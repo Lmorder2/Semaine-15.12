@@ -2,13 +2,13 @@
 # This file describes the application's metadata and properties.
 
 # The user-visible name of the application.
-name: Ok1
+name: Test Bras
 
 # A brief description of what the application does.
 description: ""
 
 # The icon for the application, can be an emoji or a short string.
-icon: 😀
+icon: 📌
 
 # A list of network ports that the application exposes.
 # Example: [80, 443]
@@ -18,4 +18,3 @@ ports: []
 bricks:
   - arduino:video_object_detection: {}
   - arduino:web_ui: {}
-  - arduino:keyword_spotting: {}
