@@ -4,10 +4,16 @@
 const int RELAY_PIN = 2; // Ton relais est sur la broche D2
 const int TASER_PIN = 6;
 
+const int BUTTON_RELAY_PIN = 3;
+const int BUTTON_TASER_PIN = 7;
+
 void setup() {
   // On configure la broche D2 comme une sortie
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(TASER_PIN, OUTPUT);
+  
+  pinMode(BUTTON_RELAY_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_TASER_PIN, INPUT_PULLUP);
   
   // Initialisation : On démarre le moniteur série pour suivre ce qui se passe
   Serial.begin(9600);
@@ -19,7 +25,15 @@ void setup() {
 }
 
 void loop() {
-  delay(100);
+  delay(50); // Faster polling
+  
+  if (digitalRead(BUTTON_RELAY_PIN) == LOW) {
+     trigger_relay();
+  }
+  
+  if (digitalRead(BUTTON_TASER_PIN) == LOW) {
+     trigger_taser();
+  }
 }
 
 void trigger_relay() {
