@@ -27,11 +27,11 @@ void setup() {
 void loop() {
   delay(50); // Faster polling
   
-  if (digitalRead(BUTTON_RELAY_PIN) == LOW) {
+  if (digitalRead(BUTTON_RELAY_PIN) == HIGH) {
      trigger_relay();
   }
   
-  if (digitalRead(BUTTON_TASER_PIN) == LOW) {
+  if (digitalRead(BUTTON_TASER_PIN) == HIGH) {
      trigger_taser();
   }
 }
