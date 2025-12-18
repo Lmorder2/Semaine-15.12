@@ -1,3 +1,5 @@
+#include <Arduino_RouterBridge.h>
+
 // Définition de la broche
 const int RELAY_PIN = 2; // Ton relais est sur la broche D2
 const int TASER_PIN = 6;
@@ -10,18 +12,28 @@ void setup() {
   // Initialisation : On démarre le moniteur série pour suivre ce qui se passe
   Serial.begin(9600);
   Serial.println("Test du relais démarré");
+
+  Bridge.begin();
+  Bridge.provide("trigger_relay", trigger_relay);
+  Bridge.provide("trigger_taser", trigger_taser);
 }
 
 void loop() {
-  // -- ACTION : ON --
+  Bridge.poll();
+}
+
+void trigger_relay() {
   Serial.println("Relais activé (ON)");
   digitalWrite(RELAY_PIN, HIGH); // Envoie 5V sur D2 pour coller le relais
-  digitalWrite(TASER_PIN, HIGH); // Envoie 5V sur D2 pour coller le relais
-  delay(2000); // Attendre 2 secondes
-
-  // -- ACTION : OFF --
+  delay(1000); // Active pour 1 seconde
+  digitalWrite(RELAY_PIN, LOW);
   Serial.println("Relais désactivé (OFF)");
-  digitalWrite(RELAY_PIN, LOW);  // Coupe le signal sur D2
-  digitalWrite(TASER_PIN, LOW); // Coupe le signal sur D2
-  delay(2000); // Attendre 2 secondes
+}
+
+void trigger_taser() {
+  Serial.println("Taser activé (ON)");
+  digitalWrite(TASER_PIN, HIGH); 
+  delay(1000); // Active pour 1 seconde
+  digitalWrite(TASER_PIN, LOW);
+  Serial.println("Taser désactivé (OFF)");
 }
