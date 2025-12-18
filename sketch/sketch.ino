@@ -19,7 +19,7 @@ void setup() {
 }
 
 void loop() {
-  Bridge.poll();
+  delay(100);
 }
 
 void trigger_relay() {
@@ -33,7 +33,7 @@ void trigger_relay() {
 void trigger_taser() {
   Serial.println("Taser activé (ON)");
   digitalWrite(TASER_PIN, HIGH); 
-  delay(1000); // Active pour 1 seconde
+  delay(500); // Active pour 1 seconde
   digitalWrite(TASER_PIN, LOW);
   Serial.println("Taser désactivé (OFF)");
 }
