@@ -23,16 +23,9 @@ COOLDOWN_SECONDS = 2.0
 def send_detections_to_ui(detections: dict):
   global current_question_index, last_action_time
 
-  # Visualization for UI
+  # Print detections
   for key, value in detections.items():
-    entry = {
-      "content": key,
-      "confidence": value.get("confidence"),
-      "timestamp": datetime.now(UTC).isoformat(),
-      "current_question": current_question_index + 1,
-      "target_answer": QUIZ_ANSWERS[current_question_index] if current_question_index < len(QUIZ_ANSWERS) else "DONE"
-    }
-    ui.send_message("detection", message=entry)
+    print(f"Detected: {key}, Confidence: {value.get('confidence')}")
 
   # Game Logic
   if current_question_index >= len(QUIZ_ANSWERS):
@@ -49,13 +42,17 @@ def send_detections_to_ui(detections: dict):
 
   for key, value in detections.items():
     if key == "RIEN":
+      # print("DEBUG: Ignoring RIEN") 
       continue
     
     if key in valid_colors:
       conf = value.get("confidence", 0)
+      print(f"DEBUG: Valid color found: {key} ({conf})")
       if conf > highest_confidence:
         highest_confidence = conf
         best_detection = key
+    else:
+      print(f"DEBUG: Ignoring invalid color: {key}")
 
   if best_detection:
     expected_answer = QUIZ_ANSWERS[current_question_index]

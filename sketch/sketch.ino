@@ -23,6 +23,7 @@ void loop() {
 }
 
 void trigger_relay() {
+  Serial.println("cmd: trigger_relay received");
   Serial.println("Relais activé (ON)");
   digitalWrite(RELAY_PIN, HIGH); // Envoie 5V sur D2 pour coller le relais
   delay(1000); // Active pour 1 seconde
@@ -31,6 +32,7 @@ void trigger_relay() {
 }
 
 void trigger_taser() {
+  Serial.println("cmd: trigger_taser received");
   Serial.println("Taser activé (ON)");
   digitalWrite(TASER_PIN, HIGH); 
   delay(500); // Active pour 1 seconde
