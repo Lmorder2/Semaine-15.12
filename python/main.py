@@ -21,6 +21,7 @@ COOLDOWN_SECONDS = 2.0
 
 # Register a callback for when all objects are detected
 def send_detections_to_ui(detections: dict):
+  # print(f"DEBUG: Callback triggered with {len(detections)} detections")
   global current_question_index, last_action_time
 
   # Print detections
