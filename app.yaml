@@ -1,18 +1,11 @@
-# app.yaml: The main configuration file for your Arduino App.
-# This file describes the application's metadata and properties.
-
-# The user-visible name of the application.
-name: Test Bras
-
-# A brief description of what the application does.
-description: ""
-
-# The icon for the application, can be an emoji or a short string.
-icon: 📌
-
-# A list of network ports that the application exposes.
-# Example: [80, 443]
+name: final_final
+description: This example showcases object detection within a live feed from a USB camera.
 ports: []
-
-# A list of bricks used by this application.
-bricks: []
+bricks:
+- arduino:video_object_detection: {
+      variables: {
+      EI_OBJ_DETECTION_MODEL: /home/arduino/.arduino-bricks/ei-models/arduino_colors.eim
+    }
+}
+- arduino:web_ui: {}
+icon: 📽️
